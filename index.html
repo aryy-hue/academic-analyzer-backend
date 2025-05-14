@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload</title>
+    <style>
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        form {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Upload File</h1>
+        
+        <!-- Form Upload Single File -->
+        <form id="singleUploadForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <h3>Upload Single File</h3>
+                <input type="file" name="file" required>
+                <button type="submit">Upload Single File</button>
+            </div>
+        </form>
+
+        <!-- Form Upload Multiple Files -->
+        <form id="multipleUploadForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <h3>Upload Multiple Files (Maks 5)</h3>
+                <input type="file" name="files" multiple required>
+                <button type="submit">Upload Multiple Files</button>
+            </div>
+        </form>
+
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        async function handleFormSubmit(form, url) {
+            const formData = new FormData(form);
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    resultDiv.style.backgroundColor = '#e6ffe6';
+                } else {
+                    resultDiv.innerHTML = `Error: ${data.message}`;
+                    resultDiv.style.backgroundColor = '#ffe6e6';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `Error: ${error.message}`;
+                resultDiv.style.backgroundColor = '#ffe6e6';
+            }
+        }
+
+        document.getElementById('singleUploadForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            handleFormSubmit(e.target, '/upload/single');
+        });
+
+        document.getElementById('multipleUploadForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            handleFormSubmit(e.target, '/upload/multiple');
+        });
+    </script>
+</body>
+</html>
