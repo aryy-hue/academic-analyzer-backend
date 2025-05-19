@@ -44,44 +44,34 @@ const upload = multer({
 
 // Route untuk halaman upload form
 app.get('/', (req, res) => {
-  res.send(`
-    <h2>Upload File CSV</h2>
-    <form action="/upload" method="post" enctype="multipart/form-data">
-      <input type="file" name="csvFile" accept=".csv">
-      <button type="submit">Upload</button>
-    </form>
-  `);
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Route untuk handle upload
 app.post('/upload', upload.single('csvFile'), (req, res) => {
   if (!req.file) {
-    return res.status(400).send('Tidak ada file yang diupload');
+    return res.status(400).json({ error: 'Tidak ada file yang diupload' });
   }
-  
-  // Informasi file yang diupload
+
   const fileInfo = {
     originalName: req.file.originalname,
     fileName: req.file.filename,
-    size: req.file.size,
-    path: req.file.path
+    size: (req.file.size / 1024).toFixed(2) + ' KB',
+    path: req.file.path,
+    uploadedAt: new Date().toISOString()
   };
 
-  res.send(`
-    <h2>File berhasil diupload!</h2>
-    <pre>${JSON.stringify(fileInfo, null, 2)}</pre>
-    <a href="/">Kembali</a>
-  `);
+  res.json(fileInfo);
   // Di dalam route POST /upload
-const results = [];
-fs.createReadStream(req.file.path)
-  .pipe(csv())
-  .on('data', (data) => results.push(data))
-  .on('end', () => {
-    console.log('Data CSV:', results);
-    // Lakukan sesuatu dengan data
+  const results = [];
+  fs.createReadStream(req.file.path)
+    .pipe(csv())
+    .on('data', (data) => results.push(data))
+    .on('end', () => {
+      console.log('Data CSV:', results);
+      // Lakukan sesuatu dengan data
+    });
   });
-});
 
 // Jalankan server
 app.listen(port, () => {
