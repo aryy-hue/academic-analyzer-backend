@@ -1,4 +1,5 @@
-id,name,math,science,english,history,final
-1,John Doe,85,90,88,92,89
-2,Jane Smith,78,85,80,88,83
-3,Bob Johnson,65,70,68,72,69
+nis,nama,matematika,fisika,kimia,biologi
+1001,Andi Wijaya,85,90,88,92
+1002,Budi Santoso,75,82,79,85
+1003,Citra Lestari,92,95,90,93
+1004,Dian Pratama,68,72,65,70

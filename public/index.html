@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CSV Uploader</title>
+    <title>Analisis Nilai Siswa</title>
     <style>
         * {
             margin: 0;
@@ -15,148 +15,129 @@
         body {
             background-color: #f0f2f5;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
             padding: 2rem;
         }
 
         .container {
+            max-width: 1200px;
+            margin: 0 auto;
             background: white;
             padding: 2rem;
             border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 600px;
-            margin-top: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
-        h1 {
-            color: #1a73e8;
-            text-align: center;
-            margin-bottom: 1.5rem;
+        .upload-section {
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 2rem;
         }
 
         .upload-form {
             display: flex;
-            flex-direction: column;
             gap: 1rem;
+            align-items: center;
         }
 
         .file-input {
-            padding: 0.5rem;
+            flex: 1;
+            padding: 0.8rem;
             border: 2px dashed #1a73e8;
             border-radius: 5px;
-            text-align: center;
             cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .file-input:hover {
-            background-color: #f8f9fa;
-            border-color: #1557b0;
-        }
-
-        input[type="file"] {
-            display: none;
-        }
-
-        .custom-file-input {
-            display: inline-block;
-            padding: 0.75rem 1.5rem;
-            background: #1a73e8;
-            color: white;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        .custom-file-input:hover {
-            background: #1557b0;
         }
 
         .submit-btn {
-            padding: 0.75rem 1.5rem;
-            background: #34a853;
+            background: #1a73e8;
             color: white;
             border: none;
+            padding: 0.8rem 1.5rem;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 1rem;
-            transition: background-color 0.3s ease;
+            transition: background 0.3s;
         }
 
         .submit-btn:hover {
-            background: #2a7e3d;
+            background: #1557b0;
         }
 
-        .file-info {
-            margin-top: 1.5rem;
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .results-table th, .results-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .results-table th {
+            background: #1a73e8;
+            color: white;
+        }
+
+        .classification {
+            font-weight: bold;
+        }
+
+        .excellent { color: #2ecc71; }
+        .good { color: #f1c40f; }
+        .average { color: #e67e22; }
+        .need-improvement { color: #e74c3c; }
+
+        .file-meta {
+            margin: 1rem 0;
             padding: 1rem;
             background: #f8f9fa;
             border-radius: 5px;
-        }
-
-        .status-message {
-            padding: 1rem;
-            border-radius: 5px;
-            margin-top: 1rem;
-            display: none;
-        }
-
-        .success {
-            background: #e6f4ea;
-            color: #34a853;
-        }
-
-        .error {
-            background: #fce8e6;
-            color: #c5221f;
-        }
-
-        #selected-file {
-            margin-top: 0.5rem;
-            color: #666;
-            font-style: italic;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>CSV File Uploader</h1>
-        
-        <form class="upload-form" id="uploadForm">
-            <div class="file-input" onclick="document.getElementById('csvFile').click()">
-                <span class="custom-file-input">Pilih File</span>
-                <span id="selected-file">Belum ada file dipilih</span>
-            </div>
+        <div class="upload-section">
+            <h1>Analisis Nilai Siswa</h1>
+            <form class="upload-form" id="uploadForm">
+                <label class="file-input">
+                    <input type="file" id="csvFile" accept=".csv" required>
+                    Pilih File CSV
+                </label>
+                <button type="submit" class="submit-btn">Proses File</button>
+            </form>
             
-            <input type="file" id="csvFile" name="csvFile" accept=".csv" required>
-            <button type="submit" class="submit-btn">Upload File</button>
-        </form>
+            <div class="file-meta" id="fileMeta" style="display: none;">
+                <p>File: <span id="fileName"></span> (<span id="fileSize"></span>)</p>
+            </div>
+        </div>
 
-        <div class="status-message" id="statusMessage"></div>
-
-        <div class="file-info" id="fileInfo" style="display: none;">
-            <h3>Informasi File:</h3>
-            <pre id="fileDetails"></pre>
-            <a href="/" id="backLink">Kembali ke Upload</a>
+        <div id="resultsSection" style="display: none;">
+            <h2>Hasil Analisis</h2>
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>NIS</th>
+                        <th>Nama</th>
+                        <th>Total Nilai</th>
+                        <th>Rata-rata</th>
+                        <th>Klasifikasi</th>
+                        <th>Detail Nilai</th>
+                    </tr>
+                </thead>
+                <tbody id="studentsData"></tbody>
+            </table>
         </div>
     </div>
 
     <script>
+        const form = document.getElementById('uploadForm');
         const csvFileInput = document.getElementById('csvFile');
-        const selectedFileSpan = document.getElementById('selected-file');
-        const uploadForm = document.getElementById('uploadForm');
-        const statusMessage = document.getElementById('statusMessage');
-        const fileInfo = document.getElementById('fileInfo');
-        const fileDetails = document.getElementById('fileDetails');
+        const resultsSection = document.getElementById('resultsSection');
+        const fileMeta = document.getElementById('fileMeta');
+        const studentsData = document.getElementById('studentsData');
 
-        csvFileInput.addEventListener('change', function(e) {
-            selectedFileSpan.textContent = this.files[0]?.name || 'Belum ada file dipilih';
-        });
-
-        uploadForm.addEventListener('submit', async function(e) {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const formData = new FormData();
@@ -168,37 +149,36 @@
                     body: formData
                 });
 
-                const result = await response.json();
+                const data = await response.json();
 
                 if (response.ok) {
-                    showSuccess('File berhasil diupload!');
-                    showFileInfo(result);
+                    // Tampilkan metadata file
+                    document.getElementById('fileName').textContent = data.fileInfo.originalName;
+                    document.getElementById('fileSize').textContent = data.fileInfo.size;
+                    fileMeta.style.display = 'block';
+
+                    // Tampilkan data siswa
+                    studentsData.innerHTML = data.students.map(student => `
+                        <tr>
+                            <td>${student.id}</td>
+                            <td>${student.name}</td>
+                            <td>${student.total}</td>
+                            <td>${student.average}</td>
+                            <td class="classification ${student.classification.toLowerCase().replace(' ', '-')}">
+                                ${student.classification}
+                            </td>
+                            <td>${student.scores.join(', ')}</td>
+                        </tr>
+                    `).join('');
+
+                    resultsSection.style.display = 'block';
                 } else {
-                    showError(result.message || 'Terjadi kesalahan saat upload');
+                    alert(data.error || 'Terjadi kesalahan');
                 }
             } catch (error) {
-                showError('Koneksi gagal. Silakan coba lagi');
+                alert('Gagal memproses file');
             }
         });
-
-        function showSuccess(message) {
-            statusMessage.className = 'status-message success';
-            statusMessage.textContent = message;
-            statusMessage.style.display = 'block';
-        }
-
-        function showError(message) {
-            statusMessage.className = 'status-message error';
-            statusMessage.textContent = message;
-            statusMessage.style.display = 'block';
-        }
-
-        function showFileInfo(data) {
-            fileInfo.style.display = 'block';
-            fileDetails.textContent = JSON.stringify(data, null, 2);
-            uploadForm.reset();
-            selectedFileSpan.textContent = 'Belum ada file dipilih';
-        }
     </script>
 </body>
 </html>
